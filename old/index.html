@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Baby Monitor Dashboard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f0f0f5;
+      margin: 0;
+      padding: 0;
+    }
+    .navbar {
+      background-color: #002147;
+      padding: 10px 20px;
+    }
+    .navbar-brand {
+      color: white;
+      font-size: 1.5rem;
+      text-decoration: none;
+    }
+    .navbar-nav a {
+      color: white;
+      margin-right: 15px;
+      text-decoration: none;
+      font-size: 1rem;
+    }
+    .hero {
+      background-color: #004080;
+      color: white;
+      text-align: center;
+      padding: 50px 20px;
+    }
+    .hero h1 {
+      font-size: 2.5rem;
+      font-weight: bold;
+    }
+    .hero p {
+      font-size: 1.2rem;
+    }
+    .section {
+      padding: 50px 20px;
+    }
+    .section-title {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 2rem;
+      color: #333;
+    }
+    .card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      background-color: white;
+      margin-bottom: 20px;
+    }
+    .footer {
+      background-color: #002147;
+      color: white;
+      text-align: center;
+      padding: 20px;
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg">
+    <a href="#" class="navbar-brand">Baby Monitor</a>
+    <div class="navbar-nav ms-auto">
+      <a href="#overview">Home</a>
+      <a href="#graphs">Graphics</a>
+      <a href="#baby-info">Baby Information</a>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <div class="hero">
+    <h1>Baby Monitor Dashboard</h1>
+    <p>You can access directly sensor information from here.</p>
+  </div>
+
+  <!-- Overview Section -->
+  <div id="overview" class="section">
+    <h2 class="section-title">Current Status</h2>
+    <div class="row">
+      <div class="col-md-4">
+        <div class="card text-center">
+          <h5 class="card-title">Current Temperature</h5>
+          <p id="temperature" class="display-6">--°C</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card text-center">
+          <h5 class="card-title">Current Humidity</h5>
+          <p id="humidity" class="display-6">--%</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card text-center">
+          <h5 class="card-title">Sound Level</h5>
+          <p id="sound" class="display-6">-- dB</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graphs Section -->
+  <div id="graphs" class="section">
+    <h2 class="section-title">Graphics</h2>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card">
+          <h5 class="card-title">Temperature History</h5>
+          <canvas id="tempChart"></canvas>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card">
+          <h5 class="card-title">Humidity History</h5>
+          <canvas id="humChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Baby Info Section -->
+  <div id="baby-info" class="section">
+    <h2 class="section-title">Baby Information</h2>
+    <div class="card">
+      <h5>İsim: <span id="babyName">Fetching data from database...</span></h5>
+      <h5>Doğum Tarihi: <span id="birthDate">Fetching data from database...</span></h5>
+      <h5>Açıklamalar: <span id="notes">Fetching data from database...</span></h5>
+    </div>
+  </div>
+  
+  <div class="section">
+    <h2 class="section-title">Download Data</h2>
+    <form method="GET" action="export.php">
+        <label for="start_date">Start date:</label>
+        <input type="date" id="start_date" name="start_date" required>
+        <label for="end_date">End date:</label>
+        <input type="date" id="end_date" name="end_date" required>
+        <label for="format">Format:</label>
+        <select id="format" name="format" required>
+            <option value="csv">CSV</option>
+            <option value="pdf">PDF</option>
+        </select>
+        <button type="submit" class="btn btn-success">Download</button>
+    </form>
+</div>
+
+
+
+  <!-- Footer -->
+  <footer class="footer">
+    &copy; Circuit Theory Baby Monitor Project, Omer CELIK. 
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    // Anlık verileri çek
+    function fetchCurrentData() {
+  fetch('get_current_data.php')
+    .then(response => response.json())
+    .then(data => {
+      // Sıcaklık kontrolü
+      const temperatureElement = document.getElementById('temperature');
+      if (data.temperature > 30) {
+        temperatureElement.innerHTML = `⚠️ <span style="color: red;">${data.temperature}°C</span>`;
+      } else if (data.temperature < 18) {
+        temperatureElement.innerHTML = `⚠️ <span style="color: blue;">${data.temperature}°C</span>`;
+      } else {
+        temperatureElement.innerHTML = `${data.temperature}°C`;
+      }
+
+      // Nem kontrolü
+      const humidityElement = document.getElementById('humidity');
+      if (data.humidity > 70) {
+        humidityElement.innerHTML = `⚠️ <span style="color: red;">${data.humidity}%</span>`;
+      } else if (data.humidity < 30) {
+        humidityElement.innerHTML = `⚠️ <span style="color: blue;">${data.humidity}%</span>`;
+      } else {
+        humidityElement.innerHTML = `${data.humidity}%`;
+      }
+
+      // Ses seviyesi kontrolü
+      const soundElement = document.getElementById('sound');
+      if (data.sound_level > 70) {
+        soundElement.innerHTML = `⚠️ <span style="color: red;">${data.sound_level} dB</span>`;
+      } else {
+        soundElement.innerHTML = `${data.sound_level} dB`;
+      }
+    })
+    .catch(error => console.error('Hata:', error));
+}
+
+  
+    let tempChart, humChart; 
+
+    function fetchGraphData() {
+  fetch('get_graph_data.php')
+    .then(response => response.json())
+    .then(data => {
+
+      const sortedData = data.sort((a, b) => new Date(a.log_time) - new Date(b.log_time));
+      const slicedData = sortedData.slice(-30);
+
+   
+      const labels = slicedData.map(item => {
+        const date = new Date(item.log_time);
+        return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+      });
+
+  
+      const tempData = slicedData.map(item => item.temperature);
+      const humData = slicedData.map(item => item.humidity);
+
+    
+      if (tempChart) {
+        tempChart.data.labels = labels;
+        tempChart.data.datasets[0].data = tempData;
+        tempChart.update();
+      } else {
+      
+        tempChart = new Chart(document.getElementById('tempChart'), {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Sıcaklık',
+              data: tempData,
+              borderColor: 'red',
+              tension: 0.4,
+              fill: false
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                display: true,
+              }
+            },
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: 'Saat',
+                }
+              },
+              y: {
+                title: {
+                  display: true,
+                  text: 'Sıcaklık (°C)',
+                }
+              }
+            }
+          }
+        });
+      }
+
+      if (humChart) {
+        humChart.data.labels = labels;
+        humChart.data.datasets[0].data = humData;
+        humChart.update();
+      } else {
+   
+        humChart = new Chart(document.getElementById('humChart'), {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Nem',
+              data: humData,
+              borderColor: 'blue',
+              tension: 0.4,
+              fill: false
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                display: true,
+              }
+            },
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: 'Saat',
+                }
+              },
+              y: {
+                title: {
+                  display: true,
+                  text: 'Nem (%)',
+                }
+              }
+            }
+          }
+        });
+      }
+    })
+    .catch(error => console.error('Hata:', error));
+}
+
+
+
+
+
+    // fetch baby info
+    function fetchBabyInfo() {
+      fetch('get_baby_info.php')
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('babyName').innerText = data.name;
+          document.getElementById('birthDate').innerText = data.birth_date;
+          document.getElementById('notes').innerText = data.notes;
+        })
+        .catch(error => console.error('Hata:', error));
+    }
+
+    
+    window.onload = function () {
+  fetchCurrentData(); 
+  fetchGraphData();   
+  fetchBabyInfo();    
+
+
+  setInterval(fetchCurrentData, 10000);
+
+  setInterval(fetchGraphData, 60000);
+};
+
+
+
+
+
+
+  </script>
+</body>
+</html>

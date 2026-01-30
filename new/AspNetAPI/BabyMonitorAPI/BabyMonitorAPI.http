@@ -1,0 +1,6 @@
+@BabyMonitorAPI_HostAddress = http://localhost:5142
+
+GET {{BabyMonitorAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
